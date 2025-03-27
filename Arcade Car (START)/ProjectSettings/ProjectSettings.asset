@@ -718,10 +718,10 @@ PlayerSettings:
     m_VersionCode: 1
     m_VersionName: 
   apiCompatibilityLevel: 6
-  cloudProjectId: 
+  cloudProjectId: 12454a29-564f-4896-a252-d5887514e829
   framebufferDepthMemorylessMode: 0
-  projectName: 
-  organizationId: 
+  projectName: Arcade Car (START) 2025-03-25_21-45-28
+  organizationId: tarrana
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0
