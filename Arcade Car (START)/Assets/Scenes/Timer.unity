@@ -6681,6 +6681,7 @@ MonoBehaviour:
   - {fileID: 7290208624151766707}
   - {fileID: 8546082518242591273}
   maxEmissionRate: 25
+  isAI: 0
   countdownDuration: 3
   canMove: 0
 --- !u!23 &4252125335307937307

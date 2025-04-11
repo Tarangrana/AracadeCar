@@ -36,9 +36,13 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scripts\AICarController.cs" />
      <Compile Include="Assets\Scripts\CarController.cs" />
      <Compile Include="Assets\Scripts\CarControllerLunar.cs" />
      <Compile Include="Assets\Scripts\CheckpointsAndLaps.cs" />
+     <Compile Include="Assets\Scripts\CheckpointsAndLaps_SimpleRace.cs" />
+     <Compile Include="Assets\Scripts\SimpleRaceManager.cs" />
+     <Compile Include="Assets\Scripts\WaypointRoute.cs" />
      <None Include="Assets\Models\Car KIt - Kenney\License.txt" />
      <None Include="Assets\Models\Racing Kit - Kenney\License.txt" />
     <Reference Include="UnityEngine">

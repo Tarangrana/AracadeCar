@@ -33,6 +33,13 @@ public class CarControllerLunar : MonoBehaviour
     public float maxEmissionRate = 25f;
     private float emissionRate;
 
+    [Header("AI Control Settings")]
+    // Set this to true on the AI car instance.
+    public bool isAI = false;
+    // These values will be set externally if isAI is true.
+    private float aiThrottle = 0f; // Expected range: 0 to 1 (0 = no throttle, 1 = full throttle)
+    private float aiSteering = 0f; // Expected range: -1 (full left) to 1 (full right)
+
     [Header("Countdown Settings")]
     public float countdownDuration = 3f;  // Duration of countdown in seconds
     private float countdownTimer;
@@ -43,14 +50,14 @@ public class CarControllerLunar : MonoBehaviour
         // Detach the Rigidbody from the car GameObject (if needed)
         carRigidbody.transform.parent = null;
 
-        // Initialize countdown timer and disable movement initially
+        // Start the countdown timer
         countdownTimer = countdownDuration;
         canMove = false;
     }
 
     private void Update()
     {
-        // Disable input during countdown.
+        // Handle countdown (same as before)
         if (!canMove)
         {
             countdownTimer -= Time.deltaTime;
@@ -58,33 +65,44 @@ public class CarControllerLunar : MonoBehaviour
             {
                 canMove = true;  // Countdown finished – allow car movement
             }
-            // Prevent any input while counting down.
+            // During countdown, no input is processed.
             speedInput = 0f;
             return;
         }
         
-        // Handle movement input once allowed
-        speedInput = 0f;
-        if (Input.GetAxis("Vertical") > 0)
+        // Process input based on control mode (Player vs AI)
+        if (!isAI)
         {
-            speedInput = Input.GetAxis("Vertical") * forwardAcceleration * 1000f;
+            // Player control using Input.GetAxis
+            speedInput = 0f;
+            if (Input.GetAxis("Vertical") > 0)
+            {
+                speedInput = Input.GetAxis("Vertical") * forwardAcceleration * 1000f;
+            }
+            else if (Input.GetAxis("Vertical") < 0)
+            {
+                speedInput = Input.GetAxis("Vertical") * reverseAcceleration * 1000f;
+            }
+            turnInput = Input.GetAxis("Horizontal");
         }
-        else if (Input.GetAxis("Vertical") < 0)
+        else
         {
-            speedInput = Input.GetAxis("Vertical") * reverseAcceleration * 1000f;
+            // AI control: use values provided by the AI controller
+            // Here, aiThrottle is expected to be between 0 and 1.
+            // Adjust the multiplication as needed for your desired behavior.
+            speedInput = aiThrottle * forwardAcceleration * 1000f;
+            // aiSteering is already expected to be in a [-1, 1] range.
+            turnInput = aiSteering;
         }
 
-        // Handle turning input
-        turnInput = Input.GetAxis("Horizontal");
-
-        // Rotate the car if grounded.
+        // Rotate the car if grounded
         if (isGrounded)
         {
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles +
-                new Vector3(0f, turnInput * turnStrength * Time.deltaTime * Input.GetAxis("Vertical"), 0f));
+                new Vector3(0f, turnInput * turnStrength * Time.deltaTime * (isAI ? 1 : Input.GetAxis("Vertical")), 0f));
         }
 
-        // Adjust the wheel rotation for visuals.
+        // Adjust wheel rotation for visuals
         leftFrontWheel.localRotation = Quaternion.Euler(leftFrontWheel.localRotation.eulerAngles.x,
             (turnInput * maxWheelTurn) - 180, leftFrontWheel.localRotation.eulerAngles.z);
         rightFrontWheel.localRotation = Quaternion.Euler(rightFrontWheel.localRotation.eulerAngles.x,
@@ -96,7 +114,7 @@ public class CarControllerLunar : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // While the car is not allowed to move (during countdown), freeze its Rigidbody.
+        // Freeze the car during the countdown
         if (!canMove)
         {
             carRigidbody.velocity = Vector3.zero;
@@ -105,7 +123,7 @@ public class CarControllerLunar : MonoBehaviour
 
         isGrounded = false;
 
-        // Raycast to detect ground.
+        // Raycast to detect the ground or terrain.
         RaycastHit hit;
         if (Physics.Raycast(groundRayOrigin.position, -transform.up, out hit, groundRayLength, groundLayer))
         {
@@ -114,7 +132,6 @@ public class CarControllerLunar : MonoBehaviour
             transform.rotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
         }
 
-        // Debug visualization.
         Debug.DrawRay(groundRayOrigin.position, -transform.up * groundRayLength, Color.red);
 
         emissionRate = 0;
@@ -122,8 +139,6 @@ public class CarControllerLunar : MonoBehaviour
         if (isGrounded)
         {
             carRigidbody.drag = groundDrag;
-
-            // Apply movement force if there is input.
             if (Mathf.Abs(speedInput) > 0)
             {
                 carRigidbody.AddForce(transform.forward * speedInput);
@@ -132,16 +147,22 @@ public class CarControllerLunar : MonoBehaviour
         }
         else
         {
-            // Use reduced drag and apply lunar gravity when in the air.
             carRigidbody.drag = 0.1f;
             carRigidbody.AddForce(Vector3.up * -gravityForce * 100f);
         }
 
-        // Update particle trail emission rate.
+        // Update dust trail particle effects.
         foreach (ParticleSystem trail in dustTrails)
         {
             var emissionModule = trail.emission;
             emissionModule.rateOverTime = emissionRate;
         }
+    }
+
+    // This function allows an external script (the AI controller) to set throttle and steering.
+    public void SetAIInput(float throttle, float steering)
+    {
+        aiThrottle = Mathf.Clamp01(throttle);
+        aiSteering = Mathf.Clamp(steering, -1f, 1f);
     }
 }
